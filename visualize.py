@@ -26,7 +26,7 @@ class AnimatedGif:
 def saveVideo(seq, filename, height=40, width=40, batch_index=0):
     animated_gif = AnimatedGif(size=(width, height))
     for i in range(len(seq)):
-        img = seq[i][batch_index, :, :, :4].clamp(0,1).numpy()
+        img = seq[i].detach().cpu()[batch_index, :, :, :4].clamp(0,1).numpy()
         animated_gif.add(img, label=str(i))
      
     animated_gif.save(filename)

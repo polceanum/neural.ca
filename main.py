@@ -1,4 +1,5 @@
 from __future__ import print_function
+import os
 import argparse
 import numpy as np
 import random
@@ -26,7 +27,17 @@ def train(args, model, device, train_target, optimizer, iter):
     
     optimizer.zero_grad()
     output, history = model(batch_data, steps=args.ca_steps)
-    loss = F.mse_loss(output[:, :, :, :4], train_target.unsqueeze(0))
+    loss = 0
+    if not args.persistence:
+        loss = F.mse_loss(output[:, :, :, :4], train_target.unsqueeze(0))
+    else:
+        nb = 0
+        for i in range(len(history)):
+            out = history[i]
+            if i >= args.ca_steps//2 and i % 4 == 0:
+                loss += F.mse_loss(out[:, :, :, :4], train_target.unsqueeze(0))
+                nb += 1
+        loss /= nb
     loss.backward()
     optimizer.step()
 
@@ -58,14 +69,20 @@ if __name__ == '__main__':
                         help='how many batches to wait before logging training status')
     parser.add_argument('--load-model-iter', type=int, default=0, metavar='S',
                         help='load model path (default: None)')
-    parser.add_argument('--save-model', action='store_true', default=False,
-                        help='For Saving the current Model')
     parser.add_argument('--ca-steps', type=int, default=96, metavar='CAS',
                         help='load model path (default: None)')
     parser.add_argument('--interim-layers', type=int, default=0, metavar='L',
                         help='load model path (default: 0)')
+    parser.add_argument('--persistence', action='store_true', default=False,
+                        help='Use persistence on the second half of CA steps')
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
+
+    # create save and video folders
+    if not os.path.exists('./videos'):
+        os.makedirs('./videos')
+    if not os.path.exists('./save'):
+        os.makedirs('./save')
 
     torch.manual_seed(args.seed)
 

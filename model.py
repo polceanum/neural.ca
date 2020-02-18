@@ -56,7 +56,7 @@ class NCA(nn.Module):
         # keep size for future use
         normal_size = x.size()
         # initialize history list
-        history = [x.detach().cpu()]
+        history = []
 
         for step in range(steps):
             # get perception for each pixel, from damaged previous state
@@ -66,6 +66,6 @@ class NCA(nn.Module):
             # add network output to state
             x = x + out.view(normal_size)
             # save history
-            history.append(x.detach().cpu())
+            history.append(x)
 
         return x, history
